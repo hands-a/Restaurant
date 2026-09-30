@@ -1,115 +1,177 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
-import { useNavigate } from 'react-router-dom';
-import { FaMoneyBillWave, FaCreditCard, FaLock } from 'react-icons/fa';
-import Button from '../components/Common/Button';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import toast from 'react-hot-toast';
+import { FaCheckCircle, FaShoppingBag } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+
+import PageContainer from '../components/layout/PageContainer';
+import Button from '../components/ui/Button';
+import PageTransition from '../components/motion/PageTransition';
+import { ScrollReveal } from '../components/motion/ScrollReveal';
+
+import CustomerInformation from '../features/checkout/components/CustomerInformation';
+import PaymentSection from '../features/checkout/components/PaymentSection';
+import OrderSummary from '../features/checkout/components/OrderSummary';
+
+const checkoutSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters'),
+  phone: z.string().min(10, 'Please enter a valid phone number'),
+  city: z.string().min(2, 'City is required'),
+  street: z.string().min(5, 'Street address is required'),
+  instructions: z.string().optional(),
+  paymentMethod: z.enum(['cash', 'card']),
+  cardNumber: z.string().optional(),
+  expiryDate: z.string().optional(),
+  cvc: z.string().optional(),
+  cardName: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.paymentMethod === 'card') {
+    if (!data.cardNumber || data.cardNumber.length < 16) {
+      ctx.addIssue({ path: ['cardNumber'], message: 'Valid card number is required', code: z.ZodIssueCode.custom });
+    }
+    if (!data.expiryDate || data.expiryDate.length < 5) {
+      ctx.addIssue({ path: ['expiryDate'], message: 'Valid expiry date (MM/YY) is required', code: z.ZodIssueCode.custom });
+    }
+    if (!data.cvc || data.cvc.length < 3) {
+      ctx.addIssue({ path: ['cvc'], message: 'Valid CVC is required', code: z.ZodIssueCode.custom });
+    }
+    if (!data.cardName || data.cardName.length < 2) {
+      ctx.addIssue({ path: ['cardName'], message: 'Card holder name is required', code: z.ZodIssueCode.custom });
+    }
+  }
+});
 
 const Checkout = () => {
-  const { cartItems, getCartTotal } = useCart();
+  const { cartItems, getCartTotal, clearCart } = useCart();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
   
-  const [paymentMethod, setPaymentMethod] = useState('cash');
   const subtotal = getCartTotal();
   const deliveryFee = 25;
   const total = subtotal + deliveryFee;
 
-  const handlePlaceOrder = (e) => {
-    e.preventDefault();
-    alert("Order Placed Successfully! 🎉\nWe will call you shortly.");
+  const { 
+    register, 
+    handleSubmit, 
+    watch, 
+    setValue,
+    formState: { errors, isSubmitting } 
+  } = useForm({
+    resolver: zodResolver(checkoutSchema),
+    defaultValues: {
+      paymentMethod: 'cash',
+      fullName: currentUser?.fullName || '',
+      phone: currentUser?.phone || '',
+      city: currentUser?.city || '',
+      street: currentUser?.street || '',
+    }
+  });
+
+  const onSubmit = async (data) => {
+    // Simulate API request
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    toast.success("Order Placed Successfully!\nWe will call you shortly.", { icon: <FaCheckCircle className="text-success" /> });
+    clearCart();
     navigate('/');
   };
 
   if (cartItems.length === 0) {
-    return <div className="pt-32 text-center">Your cart is empty.</div>;
+    return (
+      <PageTransition className="pt-32 pb-24 bg-surface text-center min-h-[100dvh]">
+        <PageContainer>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center text-center py-24 bg-surface rounded-3xl border border-border-strong/50 shadow-sm mt-12 max-w-4xl mx-auto"
+          >
+            <div className="w-24 h-24 mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <FaShoppingBag className="text-primary text-4xl" />
+            </div>
+            <h3 className="text-heading-2 mb-4">No items to checkout</h3>
+            <p className="text-body-lg text-text-secondary mb-10 max-w-md">
+              Your cart is empty. Please add items to your cart before proceeding to checkout.
+            </p>
+            <Link to="/menu">
+              <Button variant="primary" className="!px-10 !py-4">Browse Menu</Button>
+            </Link>
+          </motion.div>
+        </PageContainer>
+      </PageTransition>
+    );
   }
 
   return (
-    <div className="pt-28 pb-20 bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-black text-gray-900 mb-8">Checkout</h2>
+    <PageTransition className="bg-surface min-h-[100dvh]">
+      {/* Cinematic checkout header */}
+      <div className="pt-40 pb-12 bg-bg-dark noise-overlay border-b border-white/10">
+        <PageContainer>
+          <p className="text-overline mb-3">Secure Checkout</p>
+          <h1 className="text-heading-2 text-text-on-dark mb-8">Complete Your <em className="italic text-primary not-italic">Order</em></h1>
+          {/* Step progress */}
+          <div className="flex items-center gap-0 max-w-sm">
+            {["Your Info", "Payment", "Confirm"].map((step, i) => (
+              <React.Fragment key={step}>
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
+                    i === 2 ? "border-white/30 text-white/40" : "border-primary bg-primary text-white"
+                  }`}>{String(i + 1).padStart(2, "0")}</div>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${i === 2 ? "text-white/30" : "text-primary"}`}>{step}</span>
+                </div>
+                {i < 2 && <div className={`flex-1 h-px mx-2 mb-4 ${i === 0 ? "bg-primary" : "bg-white/15"}`} aria-hidden="true" />}
+              </React.Fragment>
+            ))}
+          </div>
+        </PageContainer>
+      </div>
 
-        <form onSubmit={handlePlaceOrder} className="grid lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-2 space-y-6">
+      <PageContainer className="py-16">
+        <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-3 gap-8 lg:gap-12" noValidate>
+          <div className="lg:col-span-2 space-y-12">
+            <ScrollReveal>
+              <div className="flex items-center gap-4 mb-6">
+                <span className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-button">01</span>
+                <h2 className="text-heading-3">Customer Details</h2>
+              </div>
+              <CustomerInformation register={register} errors={errors} />
+            </ScrollReveal>
             
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h3 className="text-xl font-bold mb-4">Delivery Information</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <input required type="text" placeholder="Full Name" className="input-field border border-gray-200 p-3 rounded-xl w-full outline-none focus:border-amber-500" />
-                <input required type="tel" placeholder="Phone Number" className="input-field border border-gray-200 p-3 rounded-xl w-full outline-none focus:border-amber-500" />
-                <input required type="text" placeholder="City / Area" className="input-field border border-gray-200 p-3 rounded-xl w-full outline-none focus:border-amber-500" />
-                <input required type="text" placeholder="Street Name & Building" className="input-field border border-gray-200 p-3 rounded-xl w-full outline-none focus:border-amber-500" />
+            <ScrollReveal delay={0.1}>
+              <div className="flex items-center gap-4 mb-6">
+                <span className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-button">02</span>
+                <h2 className="text-heading-3">Payment</h2>
               </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h3 className="text-xl font-bold mb-4">Payment Method</h3>
-              
-              <div className="grid md:grid-cols-2 gap-4 mb-6">
-                <div 
-                  onClick={() => setPaymentMethod('cash')}
-                  className={`cursor-pointer p-4 rounded-xl border-2 flex items-center gap-3 transition-all ${
-                    paymentMethod === 'cash' ? 'border-amber-600 bg-amber-50' : 'border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <FaMoneyBillWave className="text-green-600 text-xl" />
-                  <span className="font-bold text-gray-700">Cash on Delivery</span>
-                </div>
-
-                <div 
-                  onClick={() => setPaymentMethod('card')}
-                  className={`cursor-pointer p-4 rounded-xl border-2 flex items-center gap-3 transition-all ${
-                    paymentMethod === 'card' ? 'border-amber-600 bg-amber-50' : 'border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <FaCreditCard className="text-blue-600 text-xl" />
-                  <span className="font-bold text-gray-700">Credit Card (Visa/Mastercard)</span>
-                </div>
-              </div>
-
-              {paymentMethod === 'card' && (
-                <div className="space-y-4 border-t border-gray-100 pt-4 animate-fade-in">
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                    <FaLock /> Secure SSL Payment
-                  </div>
-                  <input required type="text" placeholder="Card Number" className="w-full border border-gray-200 p-3 rounded-xl outline-none focus:border-amber-500" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <input required type="text" placeholder="MM / YY" className="w-full border border-gray-200 p-3 rounded-xl outline-none focus:border-amber-500" />
-                    <input required type="text" placeholder="CVC" className="w-full border border-gray-200 p-3 rounded-xl outline-none focus:border-amber-500" />
-                  </div>
-                  <input required type="text" placeholder="Card Holder Name" className="w-full border border-gray-200 p-3 rounded-xl outline-none focus:border-amber-500" />
-                </div>
-              )}
-            </div>
+              <PaymentSection register={register} errors={errors} watch={watch} setValue={setValue} />
+            </ScrollReveal>
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 sticky top-28">
-              <h3 className="text-xl font-bold mb-4">Order Summary</h3>
-              <div className="space-y-2 mb-4 max-h-60 overflow-y-auto pr-2">
-                {cartItems.map((item) => (
-                  <div key={item.uniqueId} className="flex justify-between text-sm text-gray-600">
-                    <span>{item.quantity}x {item.name}</span>
-                    <span>{(item.price + (item.extras?.reduce((s,e)=>s+e.price,0)||0)) * item.quantity} EGP</span>
-                  </div>
-                ))}
+            <ScrollReveal delay={0.2} className="sticky top-32">
+              <div className="flex items-center gap-4 mb-6">
+                <span className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-button">03</span>
+                <h2 className="text-heading-3">Order Summary</h2>
               </div>
-              <div className="border-t border-gray-100 pt-4 space-y-2 text-gray-700">
-                <div className="flex justify-between"><span>Subtotal</span><span>{subtotal} EGP</span></div>
-                <div className="flex justify-between"><span>Delivery</span><span>{deliveryFee} EGP</span></div>
-                <div className="flex justify-between font-black text-xl text-gray-900 mt-2 pt-2 border-t border-gray-100">
-                  <span>Total</span><span>{total} EGP</span>
-                </div>
+              <OrderSummary cartItems={cartItems} subtotal={subtotal} deliveryFee={deliveryFee} total={total} />
+              <div className="mt-8">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full shadow-button"
+                  loading={isSubmitting}
+                >
+                  {isSubmitting ? "Processing Order..." : "Place Order"}
+                </Button>
               </div>
-              <Button type="submit" className="w-full mt-6 py-4 text-lg">
-                Place Order
-              </Button>
-            </div>
+            </ScrollReveal>
           </div>
-
         </form>
-      </div>
-    </div>
+      </PageContainer>
+    </PageTransition>
   );
 };
 

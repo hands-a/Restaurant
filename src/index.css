@@ -1,1 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
+
+@theme {
+  /* ── Brand Colors (Espresso, Warm Cream, Charcoal, Amber Accent) ── */
+  --color-primary:          #d97706; /* Amber accent */
+  --color-primary-hover:    #b45309; 
+  --color-primary-rich:     #78350f; /* Deep amber/espresso */
+  --color-primary-light:    #fef3c7; 
+  --color-primary-lightest: #fffbeb; 
+  --color-primary-glow:     rgba(217, 119, 6, 0.2);
+
+  /* ── Dark cinematic backgrounds (Espresso / Charcoal) ── */
+  --color-bg-deep:          #0f0a06; /* Deepest espresso black */
+  --color-bg-dark:          #1a120c; /* Deep warm charcoal */
+  --color-bg-warm:          #261a12; /* Lighter espresso */
+
+  /* ── Surfaces (Warm Cream) ── */
+  --color-surface:          #fdfbf7; /* Warm cream */
+  --color-surface-elevated: #ffffff; /* Pure white for high elevation */
+  --color-surface-sunken:   #f4efe9; /* Subdued cream */
+
+  /* ── Text — light backgrounds ── */
+  --color-text-primary:     #1a120c; /* Deep charcoal/espresso */
+  --color-text-secondary:   #4a3f35; /* Muted espresso */
+  --color-text-muted:       #8c7c6d; /* Warm gray */
+
+  /* ── Text — dark backgrounds ── */
+  --color-text-on-dark:       #fdfbf7; /* Warm cream */
+  --color-text-on-dark-muted: #c4b5a5; /* Muted warm cream */
+
+  /* ── Borders ── */
+  --color-border:           #e8e1d7; /* Soft cream border */
+  --color-border-strong:    #d1c5b4; /* Stronger cream border */
+
+  /* ── Semantic ── */
+  --color-success:          #15803d; /* Subdued olive/success */
+  --color-success-light:    #dcfce7;
+  --color-warning:          #ea580c;
+  --color-warning-light:    #ffedd5;
+  --color-error:            #dc2626; /* Controlled red for favorite/danger */
+  --color-error-light:      #fee2e2;
+  --color-info:             #2563eb;
+  --color-info-light:       #dbeafe;
+
+  /* ── Typography (Unified) ── */
+  --font-sans:     'Outfit', sans-serif;
+  --font-display:  'Outfit', sans-serif;
+
+  /* ── Border radius (Slightly refined for premium feel) ── */
+  --radius-sm:  0.25rem;
+  --radius-md:  0.5rem;
+  --radius-lg:  0.75rem;
+  --radius-xl:  1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+
+  /* ── Shadows (Softer, more premium) ── */
+  --shadow-card:       0 4px 20px -2px rgba(26, 18, 12, 0.05);
+  --shadow-card-hover: 0 20px 40px -8px rgba(26, 18, 12, 0.12);
+  --shadow-button:     0 4px 14px 0 rgba(217, 119, 6, 0.25);
+  --shadow-hero:       0 32px 80px -16px rgba(15, 10, 6, 0.6);
+
+  /* ── Transitions ── */
+  --transition-fast:   150ms ease;
+  --transition-base:   300ms ease;
+  --transition-slow:   600ms ease;
+  --ease-bounce:       cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth:       cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ─── Base styles ────────────────────────────────────────────────────────── */
+@layer base {
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-primary);
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  /* Disable all non-essential motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration:   0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration:  0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ─── Semantic Typography ────────────────────────────────────────────────── */
+@layer components {
+  .text-display-xl {
+    @apply font-display text-5xl md:text-7xl lg:text-[110px] font-black leading-[0.95] tracking-tight;
+  }
+  .text-display-lg {
+    @apply font-display text-4xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight;
+  }
+  /* ── Aliases for heading scale: heading-1 → xl, 2 → lg, 3 → md ── */
+  .text-heading-1 {
+    @apply font-display text-3xl md:text-5xl lg:text-6xl font-bold leading-tight;
+  }
+  .text-heading-2 {
+    @apply font-display text-2xl md:text-4xl lg:text-5xl font-bold leading-tight;
+  }
+  .text-heading-3 {
+    @apply font-display text-xl md:text-2xl lg:text-3xl font-bold leading-snug;
+  }
+  /* ── Legacy tokens (same values, no cross-reference) ── */
+  .text-heading-xl {
+    @apply font-display text-3xl md:text-5xl lg:text-6xl font-bold leading-tight;
+  }
+  .text-heading-lg {
+    @apply font-display text-2xl md:text-4xl lg:text-5xl font-bold leading-tight;
+  }
+  .text-heading-md {
+    @apply font-display text-xl md:text-2xl lg:text-3xl font-bold leading-snug;
+  }
+  /* ── Overline — used for labels, eyebrows, categories ── */
+  .text-overline {
+    @apply font-sans text-xs font-bold uppercase tracking-[0.2em] text-primary;
+  }
+  .text-body-lg {
+    @apply font-sans text-lg md:text-xl text-text-secondary leading-relaxed font-light;
+  }
+  .text-body {
+    @apply font-sans text-base text-text-secondary leading-relaxed;
+  }
+  .text-body-sm {
+    @apply font-sans text-sm text-text-muted leading-relaxed;
+  }
+  .text-caption {
+    @apply font-sans text-xs text-text-muted tracking-wide uppercase;
+  }
+  .text-button {
+    @apply font-sans text-sm md:text-base font-semibold tracking-wide;
+  }
+  /* ── Glass card utilities ── */
+  .glass-dark {
+    @apply bg-bg-dark/70 backdrop-blur-xl border border-white/10;
+  }
+  .glass-cream {
+    @apply bg-surface/80 backdrop-blur-xl border border-border;
+  }
+  /* ── Gradient text ── */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-yellow-300 bg-clip-text text-transparent;
+  }
+}
+
+/* ─── Global Animations & Utilities ──────────────────────────────────────── */
+
+/* Hide scrollbar for clean horizontal scrolls */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Noise overlay for cinematic depth */
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 10;
+  border-radius: inherit;
+}
+
+/* Dark section text defaults */
+.dark-section {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-on-dark);
+}
+
+.dark-section h1,
+.dark-section h2,
+.dark-section h3,
+.dark-section h4 {
+  color: var(--color-text-on-dark);
+}
+
+.dark-section .text-text-secondary {
+  color: var(--color-text-on-dark-muted);
+}
+
+.dark-section .text-text-muted {
+  color: rgba(253, 251, 247, 0.5); /* Semi-transparent warm cream */
+}
+
+/* ─── Line clamp utilities ──────────────────────────────────────────────── */
+.line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+/* ─── Phase 10: Floating animation keyframes ────────────────────────────── */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-18px) rotate(1deg); }
+  66%       { transform: translateY(-8px) rotate(-0.5deg); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50%       { transform: translateY(-12px) translateX(4px); }
+}
+
+@keyframes float-fast {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes ambient-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50%       { opacity: 0.25; transform: scale(1.08); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes clip-reveal-up {
+  from { clip-path: inset(100% 0 0 0); opacity: 0; }
+  to   { clip-path: inset(0% 0 0 0); opacity: 1; }
+}
+
+/* ─── Float utility classes ─────────────────────────────────────────────── */
+.float-slow   { animation: float-slow 7s ease-in-out infinite; }
+.float-medium { animation: float-medium 5s ease-in-out infinite; }
+.float-fast   { animation: float-fast 3s ease-in-out infinite; }
+.ambient-pulse { animation: ambient-pulse 4s ease-in-out infinite; }
+
+/* Pause all non-essential motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .float-slow, .float-medium, .float-fast, .ambient-pulse {
+    animation: none !important;
+  }
+}
+
+/* ─── 3D card tilt utility ──────────────────────────────────────────────── */
+.card-tilt {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform 0.3s ease;
+}
+
+/* ─── Clip-path reveal (for non-motion-sensitive reveals) ───────────────── */
+.clip-reveal {
+  animation: clip-reveal-up 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* ─── Shimmer loading effect ────────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(217,119,6,0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}

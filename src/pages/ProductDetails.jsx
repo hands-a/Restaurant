@@ -1,48 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FaStar, FaShoppingCart, FaArrowLeft, FaCheck } from 'react-icons/fa';
-import Button from '../components/Common/Button';
+import { useParams, Link } from 'react-router-dom';
+import { FaArrowLeft } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
-import { menuItems } from '../data/menuData'; 
+import { menuItems } from '../data/menuData';
+import { categoryOptions, defaultOptions } from '../data/productData';
+
+import ProductGallery from '../features/products/components/ProductGallery';
+import ProductInfo from '../features/products/components/ProductInfo';
+import ProductOptions from '../features/products/components/ProductOptions';
+import ProductQuantity from '../features/products/components/ProductQuantity';
+import ProductActions from '../features/products/components/ProductActions';
+import FavoriteButton from '../features/products/components/FavoriteButton';
+import RelatedProducts from '../features/products/components/RelatedProducts';
+
+import PageContainer from '../components/layout/PageContainer';
+import PageTransition from '../components/motion/PageTransition';
+import { ScrollReveal } from '../components/motion/ScrollReveal';
+import Card from '../components/ui/Card';
 
 const ProductDetails = () => {
-    const { id } = useParams(); 
-    const navigate = useNavigate();
-    const { addToCart } = useCart();
-    
-    const [quantity, setQuantity] = useState(1);
-        const [selectedSize, setSelectedSize] = useState('Medium');
-    const [extras, setExtras] = useState([]);
-  
-    const product = menuItems.find(p => p.id === parseInt(id));
+  const { id } = useParams();
+  const { addToCart } = useCart();
 
+  const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [extras, setExtras] = useState([]);
 
-    useEffect(() => {
-    if (!product) {
-        navigate('/menu');
+  const product = menuItems.find(p => p.id === parseInt(id));
+
+  // Resolve per-category options
+  const options = categoryOptions[product?.category] || defaultOptions;
+
+  // Set default size whenever product or options change
+  useEffect(() => {
+    if (options.sizes.length > 0) {
+      setSelectedSize(options.sizes[0]);
     }
+    setExtras([]);
+    setQuantity(1);
     window.scrollTo(0, 0);
-  }, [id, product, navigate]);
+  }, [id, options.sizes]);
 
-  
-  if (!product) return null;
+  if (!product) {
+    return (
+      <PageTransition className="pt-40 pb-20 min-h-[100dvh] flex flex-col items-center justify-center text-center px-4 bg-surface-elevated">
+        <h1 className="text-4xl font-black text-text-primary mb-4">Product Not Found</h1>
+        <p className="text-text-secondary mb-8">This dish doesn&apos;t exist or may have been removed.</p>
+        <Link to="/menu" className="inline-flex items-center gap-2 text-primary font-bold hover:underline">
+          <FaArrowLeft /> Back to Menu
+        </Link>
+      </PageTransition>
+    );
+  }
 
-
-  const addons = [
-      { name: 'Extra Cheese', price: 25 },
-      { name: 'Mushroom Sauce', price: 30 },
-      { name: 'Spicy Jalapenos', price: 15 },
-  ];
-  
-  const sizes = ['Small', 'Medium', 'Large'];
-
- 
   const relatedProducts = menuItems
     .filter(item => item.category === product.category && item.id !== product.id)
     .slice(0, 3);
 
-  const totalPrice = (product.price + extras.reduce((sum, item) => sum + item.price, 0)) * quantity;
+  const sizePrice = options.sizes.length > 1
+    ? (options.sizes.indexOf(selectedSize) * 20)  // +0 / +20 / +40 per tier
+    : 0;
+
+  const extrasPrice = extras.reduce((sum, item) => sum + item.price, 0);
+  const totalPrice = (product.price + sizePrice + extrasPrice) * quantity;
 
   const toggleExtra = (item) => {
     if (extras.find(e => e.name === item.name)) {
@@ -53,125 +73,66 @@ const ProductDetails = () => {
   };
 
   const handleAddToCart = () => {
-    
-    const productWithOptions = { ...product, selectedSize }; 
+    const productWithOptions = { ...product, selectedSize };
     addToCart(productWithOptions, quantity, extras);
-    navigate('/menu'); 
   };
 
   return (
-    <div className="pt-28 pb-20 bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4">
-        
-        <Link to="/menu" className="inline-flex items-center gap-2 text-gray-500 hover:text-amber-600 mb-8 font-medium transition-colors">
+    <PageTransition className="pt-28 pb-20 bg-surface min-h-[100dvh]">
+      <PageContainer>
+
+        <Link
+          to="/menu"
+          className="inline-flex items-center gap-2 text-text-muted hover:text-primary mb-8 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded-lg p-1"
+        >
           <FaArrowLeft /> Back to Menu
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-12 mb-16">
-          
-          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }}>
-            <div className="relative h-[400px] lg:h-[500px] rounded-3xl overflow-hidden shadow-lg border border-gray-100">
-              <img 
-                src={product.image} 
-                alt={product.name} 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 text-sm font-bold shadow-sm">
-                <FaStar className="text-amber-500" />
-                <span>{product.rating}</span>
-              </div>
-            </div>
-          </motion.div>
+          <ProductGallery
+            images={product.images || [product.image]}
+            name={product.name}
+            rating={product.rating}
+          />
 
-          <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col justify-center">
-            <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-4">{product.name}</h1>
-            <p className="text-gray-600 text-lg leading-relaxed mb-6">{product.description}</p>
-            <div className="mb-6">
-              <h3 className="font-bold text-gray-900 mb-3">Select Size</h3>
-              <div className="flex gap-3">
-                {sizes.map(size => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-6 py-2 rounded-xl border-2 font-bold transition-all ${
-                      selectedSize === size 
-                      ? 'border-amber-600 text-amber-600 bg-amber-50' 
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="flex flex-col justify-start gap-6">
+            <ProductInfo
+              name={product.name}
+              description={product.description}
+              category={product.category}
+              tags={product.tags}
+              rating={product.rating}
+              price={product.price}
+              prepTime={product.prepTime}
+            />
 
-            <div className="mb-8">
-              <h3 className="font-bold text-gray-900 mb-3">Extras & Add-ons</h3>
-              <div className="space-y-2">
-                {addons.map(addon => (
-                  <div 
-                    key={addon.name}
-                    onClick={() => toggleExtra(addon)}
-                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
-                      extras.find(e => e.name === addon.name)
-                      ? 'border-amber-500 bg-amber-50'
-                      : 'border-gray-100 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-                        extras.find(e => e.name === addon.name) ? 'bg-amber-500 border-amber-500 text-white' : 'border-gray-300'
-                      }`}>
-                        {extras.find(e => e.name === addon.name) && <FaCheck size={12} />}
-                      </div>
-                      <span className="font-medium text-gray-700">{addon.name}</span>
-                    </div>
-                    <span className="text-gray-500 text-sm">+{addon.price} EGP</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ProductOptions
+              sizes={options.sizes}
+              addons={options.addons}
+              selectedSize={selectedSize}
+              setSelectedSize={setSelectedSize}
+              extras={extras}
+              toggleExtra={toggleExtra}
+            />
 
-            <div className="bg-white p-4 rounded-2xl shadow-lg border border-gray-100 flex flex-col sm:flex-row items-center gap-6 sticky bottom-4 z-10">
-              <div className="flex items-center gap-4 bg-gray-100 rounded-xl p-2 w-full sm:w-auto justify-center">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm hover:text-amber-600 font-bold text-lg">-</button>
-                <span className="font-black text-xl w-8 text-center">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm hover:text-amber-600 font-bold text-lg">+</button>
-              </div>
-
-              <div className="flex-1 w-full">
-                <Button onClick={handleAddToCart} className="w-full flex items-center justify-between py-4 text-lg">
-                  <span className="flex items-center gap-2"><FaShoppingCart /> Add to Order</span>
-                  <span className="bg-white/20 px-3 py-1 rounded-lg text-sm">{totalPrice} EGP</span>
-                </Button>
-              </div>
-            </div>
-
-          </motion.div>
-        </div>
-
-        
-        <div className="border-t border-gray-200 pt-16">
-          <h2 className="text-3xl font-black text-gray-900 mb-8">You Might Also Like</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {relatedProducts.map(item => (
-              <Link to={`/menu/${item.id}`} key={item.id} className="group">
-                <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl transition-all border border-gray-100">
-                  <div className="h-48 overflow-hidden rounded-xl mb-4">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-1">{item.name}</h3>
-                    <span className="font-bold text-amber-600">{item.price} EGP</span>
-                  </div>
+            <div className="flex flex-col sm:flex-row items-center gap-4 mt-6 p-4 sm:p-6 bg-surface-sunken sm:bg-transparent rounded-[2rem] sm:rounded-none border sm:border-none border-border shadow-sm sm:shadow-none relative z-10">
+              <ProductQuantity quantity={quantity} setQuantity={setQuantity} />
+              <div className="flex flex-1 w-full gap-3 items-center">
+                <ProductActions handleAddToCart={handleAddToCart} totalPrice={totalPrice} />
+                <div className="flex-shrink-0">
+                  <FavoriteButton product={product} />
                 </div>
-              </Link>
-            ))}
+              </div>
+            </div>
           </div>
         </div>
 
-      </div>
-    </div>
+        <ScrollReveal>
+          <RelatedProducts products={relatedProducts} />
+        </ScrollReveal>
+
+      </PageContainer>
+    </PageTransition>
   );
 };
 

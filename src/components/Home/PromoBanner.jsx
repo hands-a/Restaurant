@@ -1,27 +1,69 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Button from '../Common/Button';
+import { motion } from 'framer-motion';
+import Button from '../ui/Button';
+import PageContainer from '../layout/PageContainer';
+
 
 const PromoBanner = () => {
   return (
-    <section className="py-20 bg-gray-900 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-      
-      <div className="container mx-auto px-4 relative z-10 text-center">
-        <span className="text-amber-500 font-bold tracking-widest uppercase mb-4 block">Special Offer</span>
-        <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
-          Get <span className="text-amber-500">50% OFF</span> On Your First Order
-        </h2>
-        <p className="text-gray-400 max-w-2xl mx-auto mb-10 text-lg">
-          Use code <span className="bg-white/10 px-2 py-1 rounded text-white font-mono">TASTY50</span> at checkout. 
-          Limited time offer for new customers only!
-        </p>
-        <Link to="/menu">
-          <Button variant="primary" className="px-10 py-4 text-lg shadow-amber-500/20">
-            Order Now
-          </Button>
-        </Link>
-      </div>
+    <section className="relative py-28 md:py-36 overflow-hidden">
+      {/* Full-bleed background food image */}
+      <img
+        src="/Molten Cake 1.jpg"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover object-center"
+      />
+      {/* Rich dark warm overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-bg-deep/75 via-bg-deep/65 to-bg-deep/80" />
+      {/* Amber gradient accent — top */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
+
+      <PageContainer className="relative z-10 text-center max-w-3xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="space-y-8"
+        >
+          {/* Badge */}
+          <span className="inline-block text-primary text-overline border border-primary/40 px-4 py-2 rounded-full bg-primary/10">
+            Limited Time Offer
+          </span>
+
+          {/* Headline */}
+          <h2 className="text-display-xl text-white">
+            Get{' '}
+            <span className="text-primary">50% OFF</span>
+            <br />
+            <em className="italic">Your First Order</em>
+          </h2>
+
+          {/* Offer code */}
+          <p className="text-white/70 text-body-lg">
+            Use code{' '}
+            <span className="font-mono font-black text-white bg-white/10 border border-white/20 px-3 py-1 rounded-lg tracking-widest">
+              TASTY50
+            </span>{' '}
+            at checkout. New customers only.
+          </p>
+
+          {/* CTA */}
+          <Link to="/menu" className="inline-block focus:outline-none">
+            <Button
+              variant="primary"
+              className="px-12 py-4 text-lg shadow-hero hover:shadow-button"
+            >
+              Order Now
+            </Button>
+          </Link>
+        </motion.div>
+      </PageContainer>
+
+      {/* Bottom amber accent */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
     </section>
   );
 };

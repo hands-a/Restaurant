@@ -1,110 +1,119 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaTrash, FaArrowRight, FaLongArrowAltLeft } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
-import Button from '../components/Common/Button';
-import { useCart } from '../context/CartContext'; 
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaLongArrowAltLeft, FaShoppingBag } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import Button from "../components/ui/Button";
+import PageContainer from "../components/layout/PageContainer";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import PageTransition from "../components/motion/PageTransition";
+import CartItemCard from "../features/cart/components/CartItemCard";
+import CartSummary from "../features/cart/components/CartSummary";
+import FloatingElement from "../components/interactive/FloatingElement";
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const subtotal = getCartTotal();
-  const deliveryFee = 25; 
+  const deliveryFee = 25;
   const total = subtotal + deliveryFee;
+
+  const handleCheckout = () => {
+    if (!currentUser) {
+      // Save intended destination so login can redirect back
+      navigate('/login', { state: { from: { pathname: '/checkout' } } });
+    } else {
+      navigate('/checkout');
+    }
+  };
 
   if (cartItems.length === 0) {
     return (
-      <div className="pt-32 pb-20 text-center min-h-screen flex flex-col items-center justify-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Your Cart is Empty </h2>
-        <p className="text-gray-500 mb-8">Looks like you haven't made your choice yet.</p>
-        <Link to="/menu">
-          <Button variant="primary">Browse Menu</Button>
-        </Link>
-      </div>
+      <PageTransition className="pt-32 pb-24 bg-surface min-h-[100dvh]">
+        <PageContainer>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative flex flex-col items-center justify-center text-center py-28 rounded-3xl overflow-hidden mt-8 max-w-2xl mx-auto"
+          >
+            <div className="absolute inset-0 bg-surface-sunken rounded-3xl border border-border" />
+            <FloatingElement speed="slow" className="absolute top-8 right-12 w-24 h-24 rounded-full bg-primary/5 blur-2xl" />
+            <FloatingElement speed="medium" delay={1.5} className="absolute bottom-8 left-12 w-16 h-16 rounded-full bg-primary/5 blur-xl" />
+
+            <div className="relative z-10">
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                className="w-24 h-24 mb-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto"
+              >
+                <FaShoppingBag className="text-primary text-4xl" aria-hidden="true" />
+              </motion.div>
+              <h1 className="text-heading-3 text-text-primary mb-4">Your order is empty</h1>
+              <p className="text-body-lg text-text-secondary mb-10 max-w-sm">
+                Looks like you haven't added anything yet. Let us find you something delicious.
+              </p>
+              <Link to="/menu">
+                <Button variant="primary" size="lg">Explore the Menu</Button>
+              </Link>
+            </div>
+          </motion.div>
+        </PageContainer>
+      </PageTransition>
     );
   }
 
   return (
-    <div className="pt-28 pb-20 bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4">
-        <Link to="/menu" className="inline-flex items-center gap-2 text-gray-500 hover:text-amber-600 mb-8 font-medium">
-           <FaLongArrowAltLeft /> Continue Shopping
+    <PageTransition className="pt-32 pb-24 bg-surface min-h-[100dvh]">
+      <PageContainer>
+        <Link
+          to="/menu"
+          className="inline-flex items-center gap-2 text-text-muted hover:text-primary mb-10 text-sm font-medium transition-colors"
+        >
+          <FaLongArrowAltLeft aria-hidden="true" /> Continue Shopping
         </Link>
-        <h2 className="text-3xl font-black text-gray-900 mb-8">Your Order</h2>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-2 space-y-4">
-            <AnimatePresence>
-            {cartItems.map((item) => (
-              <motion.div 
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                key={item.uniqueId}
-                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-4"
-              >
-                <img src={item.image} alt={item.name} className="w-24 h-24 rounded-xl object-cover" />
-                
-                <div className="flex-1 text-center sm:text-left">
-                  <h3 className="font-bold text-gray-900 text-lg">{item.name}</h3>
-                  {item.extras && item.extras.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      + {item.extras.map(e => e.name).join(', ')}
-                    </p>
-                  )}
-                  <p className="text-amber-600 font-bold mt-2">
-                    {(item.price + (item.extras?.reduce((s,e)=>s+e.price,0) || 0)) * item.quantity} EGP
-                  </p>
-                </div>
+        <div className="flex items-end justify-between mb-10 pb-6 border-b border-border/60">
+          <div>
+            <p className="text-overline mb-2">Review Your Selection</p>
+            <h1 className="text-heading-2 text-text-primary">
+              Your{" "}
+              <em className="italic text-primary not-italic">Order</em>
+            </h1>
+          </div>
+          <span className="text-text-muted text-sm font-medium">
+            {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
+          </span>
+        </div>
 
-                <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-2">
-                  <button onClick={() => updateQuantity(item.uniqueId, -1)} className="w-8 h-8 bg-white rounded shadow-sm hover:text-amber-600 font-bold">-</button>
-                  <span className="font-bold w-6 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.uniqueId, 1)} className="w-8 h-8 bg-white rounded shadow-sm hover:text-amber-600 font-bold">+</button>
-                </div>
-
-                <button onClick={() => removeFromCart(item.uniqueId)} className="text-gray-400 hover:text-red-500 p-2 transition-colors">
-                  <FaTrash />
-                </button>
-              </motion.div>
-            ))}
+        <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
+          <div className="lg:col-span-2 space-y-5">
+            <AnimatePresence mode="popLayout">
+              {cartItems.map((item) => (
+                <CartItemCard
+                  key={item.uniqueId}
+                  item={item}
+                  updateQuantity={updateQuantity}
+                  removeFromCart={removeFromCart}
+                />
+              ))}
             </AnimatePresence>
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 sticky top-28">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h3>
-              
-              <div className="space-y-3 mb-6 text-gray-600">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span className="font-bold text-gray-900">{subtotal} EGP</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Delivery Fee</span>
-                  <span className="font-bold text-gray-900">{deliveryFee} EGP</span>
-                </div>
-                <div className="border-t border-gray-100 pt-3 mt-3 flex justify-between text-lg font-black text-gray-900">
-                  <span>Total</span>
-                  <span className="text-amber-600">{total} EGP</span>
-                </div>
-              </div>
-
-              <Button 
-                onClick={() => navigate('/checkout')}
-                className="w-full flex justify-between items-center group"
-              >
-                <span>Proceed to Checkout</span>
-                <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-              </Button>
+            <div className="sticky top-28">
+              <CartSummary
+                subtotal={subtotal}
+                deliveryFee={deliveryFee}
+                total={total}
+                onCheckout={handleCheckout}
+                isLoggedIn={!!currentUser}
+              />
             </div>
           </div>
-
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </PageTransition>
   );
 };
 
